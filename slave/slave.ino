@@ -1,35 +1,32 @@
 #include <RH_ASK.h>
 #include <SPI.h>
 
-char receive_msg[RH_ASK_MAX_MESSAGE_LEN];
+const char *msg = "Door Open Alfredo Cagado";
+char encript_msg[RH_ASK_MAX_MESSAGE_LEN];
+char *key = "wi4142oen24io14qwfen23n55gjfj25322n5235moaosnfinwe00";
 
-void receive();
+void encript();
 
+RH_ASK driver;
 
 void setup()
 {
     Serial.begin(9600);
+    encript();
 }
 
 
 void loop()
 {
-
+    driver.send((uint8_t *)msg, strlen(msg));
+    driver.waitPacketSent();
+    delay(200);
 }
 
-
-void receive()
+void encript()
 {
-    uint8_t buff[RH_ASK_MAX_MESSAGE_LEN];
-    uint8_t bufflen = sizeof(buff);
-
-    driver.recv(buff, &bufflen));
-
-    int i = 0;
-    for(i; i < bufflen; i++)
+    for (int i = 0; i < sizeof(msg); i++)
     {
-        receive_msg[i] = buff[i];
+        encript_msg[i] = msg[i] + key[i];
     }
-
-    receive[i] = '\0';
 }
