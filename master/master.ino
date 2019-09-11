@@ -17,7 +17,9 @@ char key[][52] =
     ")43646bsjhbhjbnkwh8912r1ub80089sdhasj09wss7fdvs7vs7",
     "{ksn212nnsl24m5sklm24slknlkni2n3inr23oiooi1ni0nofin",
     "}o3290ikmmkknin21490sdnanijiowaj09isnifjasnifowenfo",
-    "+nfjj9wqjiwh0qhrqh0hh121e2142i1h210h21h12h1h1h14h5h"
+    "+nfjj9wqjiwh0qhrqh0hh121e2142i1h210h21h12h1h1h14h5h",
+    "@ksmedfmewmkefmkmefkmkem23k4k4nl2k3nk2k1lmk24nk3m2l",
+    ")mwon123nkk132n12nkj3nkj13njk312nj2n3jk12n3j12nj312"
 };
 
 RH_ASK driver;
@@ -91,7 +93,7 @@ void decript()
 
 void encript(char msg[])
 {
-    decript_index = random(0, 7);
+    decript_index = random(0, 9);
     for (int i = 0; msg[i]; i++)
     {
         encript_msg[i] = msg[i] + key[decript_index][i];
