@@ -5,8 +5,10 @@ char receive_msg[RH_ASK_MAX_MESSAGE_LEN];
 char decript_msg[RH_ASK_MAX_MESSAGE_LEN];
 char encript_msg[RH_ASK_MAX_MESSAGE_LEN];
 long decript_index;
-String open = "aberto";
-String closed = "fechado";
+String open1 = "aberto1";
+String open2 = "aberto2";
+String rec = "receive";
+String id;
 
 char key[][52] =
 {
@@ -32,36 +34,75 @@ void setup()
          Serial.println("init failed");
 
     pinMode(2, INPUT);
+    pinMode(3, INPUT);
     pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop()
 {
     receive();
-    Serial.println(decript_msg);
-    if (open.equals(decript_msg))
+    if(rec.equals(decript_index))
     {
-        digitalWrite(LED_BUILTIN,HIGH);
+        char sending[36];
+        int ok = 0;
+        while(ok == 0)
+        {
+            if(Serial.available() > 0)
+            {
+                id = Serial.readStringUntil('\n');
+                ok = 1;
+            }
+        }
+        sending[0] = 'i';
+        sending[1] = 'd';
+        sending[2] = '=';
+        for (int u = 3; u < 36; u++)
+        {
+            sending[u] = id [u - 3];
+        }
+        send(sending);
+    }
+
+    else
+    {
+        Serial.println(decript_msg);
+        if (open1.equals(decript_msg))
+        {
+            digitalWrite(LED_BUILTIN,HIGH);
+            Serial.println("aberto1");
+        }
+
+        else if(open2.equals(decript_msg))
+        {
+            digitalWrite(LED_BUILTIN,HIGH);
+            Serial.println("aberto2");
+        }
+
+        else
+        {
+            digitalWrite(LED_BUILTIN,LOW);
+            Serial.println("fechado");
+        }
+
         decript_msg[0] = '\0';
-        Serial.println("aberto");
-        receive();
-    }
-    if (closed.equals(decript_msg))
-    {
-        digitalWrite(LED_BUILTIN,LOW);
-        decript_msg[0] = '\0';
-        Serial.println("fechado");
-    }
 
-    delay(2000);
+        delay(1000);
 
-    if(digitalRead(2) == HIGH)
-    {
-        Serial.println("A enviar pass de abertura...");
-        send("abre de cesamo");
+        if(digitalRead(2) == HIGH)
+        {
+            Serial.println("A enviar pass de abertura...1");
+            send("abre de cesamo - 1");
+        }
+
+        if(digitalRead(3) == HIGH)
+        {
+            Serial.println("A enviar pass de abertura...2");
+            send("abre de cesamo - 2");
+        }
+
+        delay(1500);
+
     }
-
-    delay(1500);
 }
 
 void receive()

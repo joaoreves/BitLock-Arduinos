@@ -98,7 +98,7 @@ void loop()
             {
                 open_id[strlen(open) + j] = id[j];
             }
-            Serial.println("aberto1");
+            Serial.println("aberto2");
             send(open_id);
         }
 
