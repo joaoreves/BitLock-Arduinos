@@ -48,8 +48,8 @@ void loop()
 {
     if(eeprom_empty == 1)
     {
-        send("receive");
-        Serial.println("receive");
+        send("register");
+        Serial.println("register");
 
         delay(3000);
 
@@ -68,16 +68,21 @@ void loop()
         delay(3000);
 
         eeprom_check();
+
+        if(eeprom_empty == 0)
+        {
+            send("register id ok");
+        }
     }
 
     else
     {
         receive();
         Serial.println(decript_msg);
-        String palavra_id;
+        String palavra_id = "abre de cesamo";
         for (int j = 0; j < 36; j++)
         {
-            palavra_id[15 + j] = id[j];
+            palavra_id[14 + j] = id[j];
         }
         if (palavra_id.equals(decript_msg))
         {
@@ -93,10 +98,10 @@ void loop()
 
         if (digitalRead(4) == HIGH)
         {
-            char open_id[43];
-            for (int j = 0; j < 36; j++)
+            char open_id[43] = "aberto";
+            for (int j = 0; j < 33; j++)
             {
-                open_id[strlen(open) + j] = id[j];
+                open_id[6 + j] = id[j];
             }
             Serial.println("aberto1");
             send(open_id);
@@ -149,7 +154,7 @@ void send(char msg[])
     encript(msg);
     char final_msg[50];
     final_msg[0] = '0' + decript_index;
-    for (int i = 1; i < sizeof(encript_msg) ; i++)
+    for (int i = 1; i < strlen(encript_msg) ; i++)
     {
         final_msg[i] = encript_msg[i - 1];
     }

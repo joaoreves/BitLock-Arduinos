@@ -5,10 +5,11 @@ char receive_msg[RH_ASK_MAX_MESSAGE_LEN];
 char decript_msg[RH_ASK_MAX_MESSAGE_LEN];
 char encript_msg[RH_ASK_MAX_MESSAGE_LEN];
 long decript_index;
-String open1 = "aberto1";
-String open2 = "aberto2";
-String rec = "receive";
+String rec = "register";
+String recok = "register id ok";
 String id;
+String id1;
+String id2;
 
 char key[][52] =
 {
@@ -33,75 +34,57 @@ void setup()
     if (!driver.init())
          Serial.println("init failed");
 
-    pinMode(2, INPUT);
-    pinMode(3, INPUT);
     pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop()
 {
-    receive();
-    if(rec.equals(decript_index))
+    String string_wifi;
+    char array_wifi[60];
+
+    if(Serial.available() > 0)
     {
-        char sending[36];
+        string_wifi = Serial.readStringUntil('\n');
+        for (int u = 0; u < string_wifi.length(); u++)
+        {
+            array_wifi[u] = string_wifi[u];
+        }
+        send(array_wifi);
+    }
+
+    if(string_wifi[0] == 'i' && string_wifi[1] == 'd' && string_wifi[2] == '=')
+    {
         int ok = 0;
         while(ok == 0)
         {
-            if(Serial.available() > 0)
+            receive();
+            delay(1000);
+
+            if(recok.equals(decript_index))
             {
-                id = Serial.readStringUntil('\n');
                 ok = 1;
+                Serial.println("Registo do ID realizado com sucesso!");
+            }
+            else
+            {
+                send(array_wifi);
+                delay(1000);
             }
         }
-        sending[0] = 'i';
-        sending[1] = 'd';
-        sending[2] = '=';
-        for (int u = 3; u < 36; u++)
-        {
-            sending[u] = id [u - 3];
-        }
-        send(sending);
     }
+    delay(1000);
 
-    else
+    receive();
+
+    if(decript_msg[0] != '\0')
     {
         Serial.println(decript_msg);
-        if (open1.equals(decript_msg))
+        if(decript_msg[0] == 'a' && decript_msg[1] == 'b' && decript_msg[2] == 'e' && decript_msg[3] == 'r' && decript_msg[4] == 't' && decript_msg[5] == 'o')
         {
             digitalWrite(LED_BUILTIN,HIGH);
-            Serial.println("aberto1");
-        }
-
-        else if(open2.equals(decript_msg))
-        {
-            digitalWrite(LED_BUILTIN,HIGH);
-            Serial.println("aberto2");
-        }
-
-        else
-        {
+            delay(5000);
             digitalWrite(LED_BUILTIN,LOW);
-            Serial.println("fechado");
         }
-
-        decript_msg[0] = '\0';
-
-        delay(1000);
-
-        if(digitalRead(2) == HIGH)
-        {
-            Serial.println("A enviar pass de abertura...1");
-            send("abre de cesamo - 1");
-        }
-
-        if(digitalRead(3) == HIGH)
-        {
-            Serial.println("A enviar pass de abertura...2");
-            send("abre de cesamo - 2");
-        }
-
-        delay(1500);
-
     }
 }
 
@@ -147,7 +130,7 @@ void send(char msg[])
     encript(msg);
     char final_msg[50];
     final_msg[0] = decript_index;
-    for (int i = 1; i < sizeof(encript_msg); i++)
+    for (int i = 1; i < strlen(encript_msg); i++)
     {
         final_msg[i] = encript_msg[i-1];
     }
