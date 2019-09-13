@@ -40,25 +40,30 @@ void setup()
 void loop()
 {
     String string_wifi;
-    char array_wifi[60];
-
+    
     if(Serial.available() > 0)
     {
         string_wifi = Serial.readStringUntil('\n');
-        for (int u = 0; u < string_wifi.length(); u++)
-        {
-            array_wifi[u] = string_wifi[u];
-        }
-        send(array_wifi);
     }
-
     if(string_wifi[0] == 'i' && string_wifi[1] == 'd' && string_wifi[2] == '=')
     {
         int ok = 0;
+        String coded = "id=";
+
+        coded += "{q-";
+        for (int u = 0; u < string_wifi.length() - 3; u++)
+        {
+            coded += string_wifi[u + 3];
+        }
+
+        Serial.println(coded);
+        
         while(ok == 0)
         {
             receive();
+            digitalWrite(LED_BUILTIN,HIGH);
             delay(1000);
+            digitalWrite(LED_BUILTIN,LOW);
 
             if(recok.equals(decript_index))
             {
@@ -67,10 +72,14 @@ void loop()
             }
             else
             {
-                send(array_wifi);
+                send(coded);
                 delay(1000);
             }
         }
+    }
+    else if (string_wifi[0] != '\0');
+    {
+        send(string_wifi);
     }
     delay(1000);
 
@@ -115,7 +124,7 @@ void decript()
     }
 }
 
-void encript(char msg[])
+void encript(String msg)
 {
     decript_index = random(0, 9);
     for (int i = 0; msg[i]; i++)
@@ -125,12 +134,12 @@ void encript(char msg[])
     }
 }
 
-void send(char msg[])
+void send(String msg)
 {
     encript(msg);
     char final_msg[50];
     final_msg[0] = decript_index;
-    for (int i = 1; i < strlen(encript_msg); i++)
+    for (int i = 1; i < sizeof(encript_msg); i++)
     {
         final_msg[i] = encript_msg[i-1];
     }

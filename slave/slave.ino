@@ -30,6 +30,19 @@ RH_ASK driver;
 
 void setup()
 {
+    /*String val = "aahhaha";
+    int addr = 0;
+    for (int a = 0; a < val.length(); a++)
+    {
+        EEPROM.write(a,val[addr]);
+        addr++;
+    }
+
+    if (addr == EEPROM.length())
+    {
+        addr = 0;
+    }*/
+    
     Serial.begin(9600);
     randomSeed(analogRead(0));
 
@@ -40,12 +53,11 @@ void setup()
     digitalWrite(LED_BUILTIN, LOW);
     pinMode(3, OUTPUT);
     pinMode(4, INPUT);
-
-    eeprom_check();
 }
 
 void loop()
-{
+{    
+    eeprom_check();
     if(eeprom_empty == 1)
     {
         send("register");
@@ -54,16 +66,17 @@ void loop()
         delay(3000);
 
         receive();
+        Serial.println(decript_msg);
 
         if(decript_msg[0] == 'i' && decript_msg[1] == 'd' && decript_msg[2] == '=')
         {
-            for(int u = 0; u < 33; u++)
+            for(int u = 0; u < 36; u++)
             {
-                id[u] = decript_msg[u + 3];
+                memid[u] = decript_msg[u + 3];
             }
         }
 
-        eeprom_write(id);
+        eeprom_write(memid);
 
         delay(3000);
 
@@ -84,6 +97,7 @@ void loop()
         {
             palavra_id[14 + j] = id[j];
         }
+        Serial.println(id);
         if (palavra_id.equals(decript_msg))
         {
             digitalWrite(LED_BUILTIN, HIGH);
@@ -154,7 +168,7 @@ void send(char msg[])
     encript(msg);
     char final_msg[50];
     final_msg[0] = '0' + decript_index;
-    for (int i = 1; i < strlen(encript_msg) ; i++)
+    for (int i = 1; i < sizeof(encript_msg) ; i++)
     {
         final_msg[i] = encript_msg[i - 1];
     }
@@ -178,7 +192,7 @@ void eeprom_check()
 
     if(memid[0] != '}' || memid[1] != 'q' || memid[2] != '-')
     {
-        eeprom_empty = 0;
+        eeprom_empty = 1;
         for(int u = 0; u < 33; u++)
         {
             id[u] = memid[u + 3];
@@ -186,19 +200,20 @@ void eeprom_check()
     }
     else
     {
-        eeprom_empty = 1;
+        eeprom_empty = 0;
+        for(int u = 0; u < 33; u++)
+        {
+            id[u] = memid[u + 3];
+        }
     }
 }
 
 void eeprom_write(char val[])
 {
     int addr = 0;
-    EEPROM.write(0,'}');
-    EEPROM.write(1,'q');
-    EEPROM.write(2,'-');
-    for (int a = 3; a < strlen(val) + 3; a++)
+    for (int a = 0; a < strlen(val); a++)
     {
-        EEPROM.write(a,val[addr]);
+        EEPROM.write(addr,val[a]);
         addr++;
     }
 
