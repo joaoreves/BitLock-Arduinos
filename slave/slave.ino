@@ -1,16 +1,18 @@
-#include <RH_ASK.h>
+#include <VirtualWire.h>
 #include <SPI.h>
 #include <EEPROM.h>
 
-char encript_msg[RH_ASK_MAX_MESSAGE_LEN];
-char receive_msg[RH_ASK_MAX_MESSAGE_LEN];
-char decript_msg[RH_ASK_MAX_MESSAGE_LEN];
+
+char encript_msg[VW_MAX_MESSAGE_LEN];
+char receive_msg[VW_MAX_MESSAGE_LEN];
+char decript_msg[VW_MAX_MESSAGE_LEN];
 String palavra = "abre de cesamo";
 char open[] = "aberto";
 long decript_index;
 char id[33];
 char memid[36];
 int eeprom_empty;
+char program_state;
 
 char key[][52] =
 {
@@ -26,37 +28,119 @@ char key[][52] =
     ")mwon123nkk132n12nkj3nkj13njk312nj2n3jk12n3j12nj312"
 };
 
-RH_ASK driver;
+
+void resetEEPROM() {
+  String val = "aahhaha";
+  int addr = 0;
+  for (int a = 0; a < val.length(); a++)
+  {
+      EEPROM.write(a,val[addr]);
+      addr++;
+  }
+  if (addr == EEPROM.length())
+  {
+      addr = 0;
+  }
+}
 
 void setup()
 {
-    /*String val = "aahhaha";
-    int addr = 0;
-    for (int a = 0; a < val.length(); a++)
-    {
-        EEPROM.write(a,val[addr]);
-        addr++;
-    }
-
-    if (addr == EEPROM.length())
-    {
-        addr = 0;
-    }*/
-    
     Serial.begin(9600);
     randomSeed(analogRead(0));
+    vw_setup(500); 
+    vw_set_ptt_inverted(true);
+    vw_set_rx_pin(11);
+    vw_set_tx_pin(12);
 
-    if (!driver.init())
-    Serial.println("init failed");
-
+    
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
     pinMode(3, OUTPUT);
     pinMode(4, INPUT);
+    pinMode(5, INPUT);
+    
+    program_state = '0';
 }
 
 void loop()
-{    
+{
+  Serial.println(program_state);
+  switch(program_state) {
+    case '0':
+      Serial.println("register");
+      send("register");
+      program_state = '1';
+      delay(500);
+      break;
+    case '1':
+      eeprom_check();
+      if(eeprom_empty == 0)
+      {
+          program_state = '2';
+          delay(500);
+          break;
+      }
+      
+      receive();
+      Serial.println(decript_msg);
+      if(decript_msg[0] == 'i' && decript_msg[1] == 'd' && decript_msg[2] == '=')
+      {
+          eeprom_write(decript_msg);
+          eeprom_check();
+          program_state = '2';
+          Serial.println("registered");
+      }
+      
+      else 
+      {
+          Serial.println("not registered");
+          program_state = '0';
+      }
+      delay(1500);
+      break;
+    case '2':
+      send("register id ok");
+      program_state = '3';  
+      delay(1500);
+      break;
+    case '3':
+      receive();
+      Serial.println(decript_msg);
+      String palavra_id = "abre de cesamo";
+      palavra_id += id;
+      Serial.println(id);
+      if (palavra_id.equals(decript_msg))
+      {
+          digitalWrite(LED_BUILTIN, HIGH);
+          digitalWrite(3, HIGH);
+          delay(5000);
+          digitalWrite(LED_BUILTIN, LOW);
+          digitalWrite(3, LOW);
+          decript_msg[0] = '\0';
+      }
+      program_state = '4';
+      delay(1500);
+      break;
+    case '4':
+      if (digitalRead(4) == HIGH)
+      {
+          char open_id[43] = "aberto";
+          for (int j = 0; j < 33; j++)
+          {
+              open_id[6 + j] = id[j];
+          }
+          Serial.println("aberto1");
+          send(open_id);
+      }
+      delay(1500);
+      break;
+  }
+
+  if(digitalRead(5) == HIGH) { 
+    resetEEPROM();
+  }
+  delay(1500);
+  /*
     eeprom_check();
     if(eeprom_empty == 1)
     {
@@ -70,13 +154,8 @@ void loop()
 
         if(decript_msg[0] == 'i' && decript_msg[1] == 'd' && decript_msg[2] == '=')
         {
-            for(int u = 0; u < 36; u++)
-            {
-                memid[u] = decript_msg[u + 3];
-            }
+             eeprom_write(decript_msg);
         }
-
-        eeprom_write(memid);
 
         delay(3000);
 
@@ -122,7 +201,7 @@ void loop()
         }
 
         delay(1500);
-    }
+    }*/
 
 }
 
@@ -148,10 +227,10 @@ void decript()
 
 void receive()
 {
-    uint8_t buff[RH_ASK_MAX_MESSAGE_LEN];
-    uint8_t bufflen = sizeof(buff);
-
-    if (driver.recv(buff, &bufflen))
+    vw_rx_start();
+    uint8_t buff[VW_MAX_MESSAGE_LEN];
+    uint8_t bufflen = VW_MAX_MESSAGE_LEN;
+    if (vw_get_message(buff, &bufflen))
     {
         int i = 0;
         for (i; i < bufflen; i++)
@@ -173,8 +252,8 @@ void send(char msg[])
         final_msg[i] = encript_msg[i - 1];
     }
 
-    driver.send((uint8_t *)final_msg, strlen(final_msg));
-    driver.waitPacketSent();
+    vw_send((uint8_t *)final_msg, strlen(final_msg));
+    vw_wait_tx();
     delay(1000);
 }
 
@@ -190,13 +269,9 @@ void eeprom_check()
     }
     address = 0;
 
-    if(memid[0] != '}' || memid[1] != 'q' || memid[2] != '-')
+    if(memid[0] != 'i' || memid[1] != 'd' || memid[2] != '=')
     {
         eeprom_empty = 1;
-        for(int u = 0; u < 33; u++)
-        {
-            id[u] = memid[u + 3];
-        }
     }
     else
     {
