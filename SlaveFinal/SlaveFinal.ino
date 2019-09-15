@@ -1,5 +1,4 @@
 String string_wifi;
-String abrir("open");
 
 void setup()
 {
@@ -9,6 +8,7 @@ void setup()
     pinMode(3, OUTPUT);
     digitalWrite(3,LOW);
     pinMode(6,INPUT);
+    digitalWrite(6,LOW);
 }
 
 void loop()
@@ -19,16 +19,19 @@ void loop()
       string_wifi = Serial.readStringUntil('\n');
       Serial.flush();
     }
+    Serial.println(string_wifi);
 
-    if(abrir.equals(string_wifi))
+    if(string_wifi.startsWith("open"))
     {
         digitalWrite(3,HIGH);
         digitalWrite(LED_BUILTIN,HIGH);
+        Serial.println("aberto");  // aviso o esp que o trinco esta aberto
         delay(5000);
         digitalWrite(3,LOW);
         digitalWrite(LED_BUILTIN,LOW);
+        string_wifi = "";
     }
-    Serial.println("aberto");  // aviso o esp que o trinco esta aberto
+    string_wifi = "";
 
     delay(500);
 
