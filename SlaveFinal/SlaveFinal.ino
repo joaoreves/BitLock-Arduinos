@@ -1,3 +1,9 @@
+/*this Arduino receives the "open" comand from the ESP8266
+*if "open" is received the Arduino activates the relay and the door unlocks fo 5 seconds
+*it also resets the ESP8266's EEPROM if a button is pressed (pin6), to clear the initial register
+*it communicates with the ESP8266 via Serial
+*/
+
 String string_wifi;
 
 void setup()
@@ -15,23 +21,24 @@ void loop()
 {
     if (Serial.available() > 0)
     {
-      delay(1000);
-      string_wifi = Serial.readStringUntil('\n');
+      delay(500);
+      string_wifi = Serial.readStringUntil('\n');  //receives the "open" command from the ESP8266
       Serial.flush();
     }
     Serial.println(string_wifi);
 
     if(string_wifi.startsWith("open"))
     {
-        digitalWrite(3,HIGH);
+        digitalWrite(3,HIGH);           //activates the relay
         digitalWrite(LED_BUILTIN,HIGH);
-        Serial.println("aberto");  // aviso o esp que o trinco esta aberto
-        delay(5000);
+        Serial.println("aberto");  // warns the esp8266 that the door is open
+        delay(5000);  //stays unlocked for 5 seconds
         digitalWrite(3,LOW);
         digitalWrite(LED_BUILTIN,LOW);
-        string_wifi = "";
+        Serial.println("fechado");
+        string_wifi = "";   //clears the string
     }
-    string_wifi = "";
+    string_wifi = "";  //clears the string
 
     delay(500);
 
